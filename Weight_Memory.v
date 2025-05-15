@@ -1,10 +1,14 @@
 `include "include.v"
 
-module Weight_Memory #(parameter numWeight = 3, neuronNo=5,layerNo=1,addressWidth=10,dataWidth=16,weightFile="weights.mif") 
+module Weight_Memory #(parameter numWeight = 3, neuronNo=5,layerNo=1,addressWidth=10,dataWidth=16,weightFile="weights1.mif") 
+    // using memory initialization file (fixed point representation)
     ( 
     input clk,
     input wen,
     input ren,
+    // adderess width is 10 due to number convention followed in the design
+    // fixed point represetation
+    // wadd and radd are bounded by numWeight
     input [addressWidth-1:0] wadd,
     input [addressWidth-1:0] radd,
     input [dataWidth-1:0] win,
@@ -35,7 +39,7 @@ module Weight_Memory #(parameter numWeight = 3, neuronNo=5,layerNo=1,addressWidt
         end
         else 
         begin
-            wout <= {dataWidth{1'b0}};
+            wout <= {dataWidth{1'b0}}; // 0 output if not reading
         end
     end 
 endmodule
