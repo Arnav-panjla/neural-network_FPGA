@@ -118,14 +118,14 @@ module Layer_1 #(
             ) neuron_inst (
                 .clk(clk),
                 .rst(rst),
-                .myinput(x_in),
-                .weightValid(weightValid),
-                .biasValid(biasValid),
+                .inputValue(x_in),
+                .inputValueValid(x_valid),
                 .weightValue(weightValue),
+                .weightValid(weightValid),
                 .biasValue(biasValue),
-                .config_layer_num(config_layer_num),
-                .config_neuron_num(config_neuron_num),
-                .myinputValid(x_valid),
+                .biasValid(biasValid),                
+                .configTargetLayer(config_layer_num),
+                .configTargetNeuron(config_neuron_num),
                 .out(x_out[i*dataWidth +: dataWidth]),
                 .outvalid(o_valid[i])
             );

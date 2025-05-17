@@ -29,8 +29,8 @@ module neuron #(
     input [31:0]              configTargetLayer,
     input [31:0]              configTargetNeuron,
     
-    output [dataWidth-1:0]    outputValue,
-    output reg                outputValueValid   
+    output [dataWidth-1:0]    out,
+    output reg                outVld   
 );
     
     parameter addressWidth = $clog2(inputCount);
@@ -62,7 +62,7 @@ module neuron #(
 
     // ======= INPUT ADDRESS MANAGEMENT =======
     always @(posedge clk) begin
-        if(rst | outputValueValid)
+        if(rst | outVld)
             weightReadAddress <= 0;  
         else if(inputValueValid)
             weightReadAddress <= weightReadAddress + 1;  
@@ -75,9 +75,8 @@ module neuron #(
             weightWriteAddress <= {addressWidth{1'b1}}; // neat trick, +1 is done at later stage
             weightWriteEnable <= 0;
         end
-        else if(weightValid & 
-                (configTargetLayer == layerNumber) & 
-                (configTargetNeuron == neuronNumber)) begin
+        else if(weightValid & (configTargetLayer == layerNumber) & (configTargetNeuron == neuronNumber)) // write to weight memory
+            begin
             weightWriteData <= weightValue;
             weightWriteAddress <= weightWriteAddress + 1; // for rst its all 1s
             weightWriteEnable <= 1;
@@ -135,7 +134,7 @@ module neuron #(
         inputValidPipelineStage2 <= inputValidPipelineStage1;
         
         activationInputValid <= ((weightReadAddress == inputCount) & fallingEdgeDetected) ? 1'b1 : 1'b0;
-        outputValueValid <= activationInputValid;
+        outVld <= activationInputValid;
         
         delayedValidSignal <= inputValidPipelineStage2_wire;
         fallingEdgeDetected <= !inputValidPipelineStage2_wire & delayedValidSignal;
@@ -154,7 +153,7 @@ module neuron #(
 
     // ======= ACCUMULATION (including overflow) =======
     always @(posedge clk) begin
-        if(rst | outputValueValid)
+        if(rst | outVld)
             accumulatedSum <= 0;  
 
         else if(inputValidPipelineStage2_wire) 
@@ -205,7 +204,7 @@ module neuron #(
             ) sigmoidROM (
                 .clk(clk),
                 .x(accumulatedSum[2*dataWidth-1-:sigmoidAddressWidth]),
-                .out(outputValue)
+                .out(out)
             );
         end
         else begin: reluActivation
@@ -216,7 +215,7 @@ module neuron #(
             ) reluFunction (
                 .clk(clk),
                 .x(accumulatedSum),
-                .out(outputValue)
+                .out(out)
             );
         end
     endgenerate
@@ -226,8 +225,8 @@ module neuron #(
     // ======= DEBUG OUTPUT =======
     `ifdef DEBUG
     always @(posedge clk) begin
-        if(outputValueValid)
-            $display(neuronNumber,,,,"%b",outputValue);
+        if(outVld)
+            $display(neuronNumber,,,,"%b",out);
     end
     `endif
 endmodule
