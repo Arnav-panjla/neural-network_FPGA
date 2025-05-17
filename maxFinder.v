@@ -1,39 +1,43 @@
-module maxFinder #(parameter numInput=10,parameter inputWidth=16)(
-input           i_clk,
-input [(numInput*inputWidth)-1:0]   i_data,
-input           i_valid,
-output reg [31:0]o_data,
-output  reg     o_data_valid
+module maxFinder #(
+    parameter numInput = 10,           
+    parameter inputWidth = 16            
+)(
+    input                          clk,
+    input                          rst,
+    input  [numInput*inputWidth-1:0] din,
+    input                          din_vld,
+    output reg [31:0]              max_idx,
+    output reg                     max_idx_vld
 );
 
-reg [inputWidth-1:0] maxValue;
-reg [(numInput*inputWidth)-1:0] inDataBuffer;
-integer counter;
+    reg [inputWidth-1:0] max_val;
+    reg [31:0] max_index;
+    integer i;
 
-always @(posedge i_clk)
-begin
-    o_data_valid <= 1'b0;
-    if(i_valid)
-    begin
-        maxValue <= i_data[inputWidth-1:0];
-        counter <= 1;
-        inDataBuffer <= i_data;
-        o_data <= 0;
-    end
-    else if(counter == numInput)
-    begin
-        counter <= 0;
-        o_data_valid <= 1'b1;
-    end
-    else if(counter != 0)
-    begin
-        counter <= counter + 1;
-        if(inDataBuffer[counter*inputWidth+:inputWidth] > maxValue)
-        begin
-            maxValue <= inDataBuffer[counter*inputWidth+:inputWidth];
-            o_data <= counter;
+    always @(*) begin
+        max_val = din[inputWidth-1:0];
+        max_index = 0;
+        
+        for (i = 1; i < numInput; i = i + 1) begin
+            if ($signed(din[(i+1)*inputWidth-1:i*inputWidth]) > $signed(max_val)) begin
+                max_val = din[(i+1)*inputWidth-1:i*inputWidth];
+                max_index = i;
+            end
         end
     end
-end
+
+    // Register the outputs
+    always @(posedge clk) begin
+        if (rst) begin
+            max_idx <= 0;
+            max_idx_vld <= 1'b0;
+        end
+        else begin
+            max_idx_vld <= din_vld; 
+            if (din_vld) begin
+                max_idx <= max_index; 
+            end
+        end
+    end
 
 endmodule
