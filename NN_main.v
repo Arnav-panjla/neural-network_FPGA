@@ -119,7 +119,6 @@ Layer_1 #(.NN(`numNeuronLayer1),.numWeight(`numWeightLayer1),.dataWidth(`dataWid
 );
 
 //State machine for data pipelining
-
 reg       state_1;
 integer   count_1;
 always @(posedge s_axi_aclk)
@@ -297,58 +296,6 @@ Layer_4 #(.NN(`numNeuronLayer4),.numWeight(`numWeightLayer4),.dataWidth(`dataWid
 	.o_valid(o4_valid),
 	.x_out(x4_out)
 );
-
-//State machine for data pipelining
-
-reg       state_4;
-integer   count_4;
-always @(posedge s_axi_aclk)
-begin
-    if(reset)
-    begin
-        state_4 <= IDLE;
-        count_4 <= 0;
-        data_out_valid_4 <=0;
-    end
-    else
-    begin
-        case(state_4)
-            IDLE: begin
-                count_4 <= 0;
-                data_out_valid_4 <=0;
-                if (o4_valid[0] == 1'b1)
-                begin
-                    holdData_4 <= x4_out;
-                    state_4 <= SEND;
-                end
-            end
-            SEND: begin
-                out_data_4 <= holdData_4[`dataWidth-1:0];
-                holdData_4 <= holdData_4>>`dataWidth;
-                count_4 <= count_4 +1;
-                data_out_valid_4 <= 1;
-                if (count_4 == `numNeuronLayer4)
-                begin
-                    state_4 <= IDLE;
-                    data_out_valid_4 <= 0;
-                end
-            end
-        endcase
-    end
-end
-
-reg [`numNeuronLayer4*`dataWidth-1:0] holdData_5;
-assign axi_rd_data = holdData_5[`dataWidth-1:0];
-
-always @(posedge s_axi_aclk)
-    begin
-        if (o4_valid[0] == 1'b1)
-            holdData_5 <= x4_out;
-        else if(axi_rd_en)
-        begin
-            holdData_5 <= holdData_5>>`dataWidth;
-        end
-    end
 
 
 maxFinder #(.numInput(`numNeuronLayer4),.inputWidth(`dataWidth))
